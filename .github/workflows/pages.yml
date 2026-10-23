@@ -39,8 +39,8 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
+      # no lockfile is tracked (jsonld.js ignores it), so npm install, as its own CI does
+      - run: npm install
       - run: npm run lint
       - run: npm run test-array
       - run: npm run build
