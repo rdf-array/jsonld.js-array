@@ -1,3 +1,18 @@
+<img src=".github/rdf-array-logo.png" alt="[jsonld.js]" width="96" align="right">
+
+# jsonld.js-array: jsonld.js for rdf-array
+
+**rdf-array** fork of [jsonld.js](https://github.com/digitalbazaar/jsonld.js): the JSON-LD processor,
+unchanged, plus an implementation of **JSON-LD-array**, a mapping language that turns conventional JSON
+(no `@` keywords in the data) into rdf-array, RDF whose data model has sequences as terms. A JSON array
+becomes one sequence term `( e1 e2 … )`, nested arrays nested sequences and `[]` the empty sequence,
+instead of an `rdf:first`/`rdf:rest` ladder. `jsonld.arrayToRDF(data, mapping, {format})` converts,
+writing N-Quads-array, Turtle-array, or RDF/JS quads whose sequence terms are
+`{termType: "Sequence", elements}`; `jsonld.array.parseJSON` keeps the lexical form of numbers.
+`npm run playground` builds the browser bundle and serves a local playground at
+[playground/](playground/) with the examples of the specification, `json-ld-array.md` in the
+rdf-array project; `npm run test-array` runs the tests. Notes in [doc/rdf-array.md](doc/rdf-array.md).
+
 jsonld.js
 =========
 

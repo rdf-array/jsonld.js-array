@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JSON-LD-array playground</title>
+  <style>
+    :root {
+      --bg: #fafafa; --fg: #222; --muted: #666; --border: #ccc; --accent: #0b5394;
+      --error-bg: #fdecea; --error-fg: #8a1c1c; --pane: #fff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1e1e1e; --fg: #e8e8e8; --muted: #aaa; --border: #444; --accent: #6fa8dc;
+              --error-bg: #3a1f1f; --error-fg: #ffb3b3; --pane: #262626; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+    header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 1em; padding: 0.6em 1em; border-bottom: 1px solid var(--border); }
+    header h1 { font-size: 1.2em; margin: 0; }
+    header .note { color: var(--muted); }
+    main { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; height: calc(100vh - 3.2em); }
+    section { display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--border); }
+    section:last-child { border-right: 0; }
+    .bar { display: flex; align-items: center; gap: 0.6em; padding: 0.4em 0.8em; border-bottom: 1px solid var(--border); background: var(--pane); }
+    .bar label { font-weight: 600; }
+    .bar select, .bar button { font: inherit; }
+    textarea, pre { flex: 1; margin: 0; padding: 0.8em; border: 0; font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--pane); color: var(--fg); resize: none; overflow: auto; white-space: pre; }
+    textarea:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+    #error { display: none; margin: 0; padding: 0.8em; background: var(--error-bg); color: var(--error-fg); white-space: pre-wrap; font-family: ui-monospace, Menlo, monospace; }
+    #error.visible { display: block; }
+    .hljs-attr { color: #0b5394; } .hljs-string { color: #38761d; } .hljs-number { color: #a61c00; }
+    .hljs-iri { color: #0b5394; } .hljs-pname { color: #38761d; } .hljs-lit { color: #a61c00; }
+    .hljs-kw { color: #741b47; font-weight: bold; } .hljs-bnode { color: #666; } .hljs-cmt { color: #777; }
+    @media (prefers-color-scheme: dark) {
+      .hljs-attr, .hljs-iri { color: #8ab4f8; } .hljs-string, .hljs-pname { color: #a5d6a7; }
+      .hljs-number, .hljs-lit { color: #f28b82; } .hljs-kw { color: #d7aefb; } .hljs-bnode { color: #bbb; }
+    }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; height: auto; } section { border-right: 0; border-bottom: 1px solid var(--border); min-height: 40vh; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>JSON-LD-array playground</h1>
+    <span class="note">conventional JSON + a mapping &rarr; rdf-array (sequences as terms); see <code>json-ld-array.md</code></span>
+    <label>Example <select id="example"></select></label>
+  </header>
+  <main>
+    <section>
+      <div class="bar"><label for="data">JSON data</label></div>
+      <textarea id="data" spellcheck="false"></textarea>
+    </section>
+    <section>
+      <div class="bar"><label for="mapping">Mapping</label> <span class="note">(empty when the data embeds one)</span></div>
+      <textarea id="mapping" spellcheck="false"></textarea>
+    </section>
+    <section>
+      <div class="bar">
+        <label for="format">Output</label>
+        <select id="format">
+          <option value="text/turtle">Turtle-array</option>
+          <option value="application/n-quads">N-Quads-array</option>
+          <option value="quads">RDF/JS quads (JSON)</option>
+        </select>
+        <button id="run">Convert</button>
+      </div>
+      <pre id="error"></pre>
+      <pre id="output"></pre>
+    </section>
+  </main>
+  <script src="../dist/jsonld.min.js"></script>
+  <script src="examples.js"></script>
+  <script>
+    (function() {
+      const $ = id => document.getElementById(id);
+      const data = $('data'), mapping = $('mapping'), output = $('output'), error = $('error');
+      const examples = window.JSONLD_ARRAY_EXAMPLES || [];
+      examples.forEach((example, i) => {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = example.title;
+        $('example').appendChild(option);
+      });
+      function load(i) {
+        const example = examples[i];
+        if(!example) { return; }
+        data.value = example.data;
+        mapping.value = example.mapping;
+        run();
+      }
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const turtleToken = /(<[^>\s]*>)|("""[\s\S]*?"""|"(?:[^"\\]|\\.)*")(@[A-Za-z0-9-]+|\^\^[^\s;,.()\]]+)?|(#[^\n]*)|(\?[A-Za-z_]\w*)|(_:[A-Za-z0-9_-]+)|(\b(?:PREFIX|BASE|a)\b)|(\b-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|([A-Za-z][\w-]*:[\w#./-]*|[A-Za-z][\w-]*:)/g;
+      function paintTurtle(src) {
+        let out = '', last = 0, m;
+        turtleToken.lastIndex = 0;
+        while((m = turtleToken.exec(src))) {
+          out += esc(src.slice(last, m.index));
+          const cls = m[1] ? 'hljs-iri' : m[2] ? 'hljs-lit' : m[4] ? 'hljs-cmt' : m[5] ? 'hljs-var' : m[6] ? 'hljs-bnode' : m[7] ? 'hljs-kw' : m[8] ? 'hljs-number' : 'hljs-pname';
+          out += `<span class="${cls}">${esc(m[0])}</span>`;
+          last = turtleToken.lastIndex;
+        }
+        return out + esc(src.slice(last));
+      }
+      const jsonToken = /("(?:[^"\\]|\\.)*")(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|\b(true|false|null)\b/g;
+      function paintJson(src) {
+        let out = '', last = 0, m;
+        jsonToken.lastIndex = 0;
+        while((m = jsonToken.exec(src))) {
+          out += esc(src.slice(last, m.index));
+          if(m[1]) { out += `<span class="${m[2] ? 'hljs-attr' : 'hljs-string'}">${esc(m[1])}</span>${esc(m[2] || '')}`; }
+          else if(m[3]) { out += `<span class="hljs-number">${esc(m[3])}</span>`; }
+          else { out += `<span class="hljs-kw">${esc(m[4])}</span>`; }
+          last = jsonToken.lastIndex;
+        }
+        return out + esc(src.slice(last));
+      }
+      function showError(e) {
+        const path = e && e.details && Array.isArray(e.details.path) ? `\nat /${e.details.path.join('/')}` : '';
+        error.textContent = `${e && e.name ? e.name + ': ' : ''}${e && e.message ? e.message : e}${path}`;
+        error.classList.add('visible');
+      }
+      async function run() {
+        error.classList.remove('visible');
+        let parsedData, parsedMapping;
+        try {
+          parsedData = jsonld.array.parseJSON(data.value);
+        } catch(e) {
+          return showError(new Error('The JSON data does not parse: ' + e.message));
+        }
+        try {
+          parsedMapping = mapping.value.trim() ? JSON.parse(mapping.value) : {};
+        } catch(e) {
+          return showError(new Error('The mapping does not parse: ' + e.message));
+        }
+        const format = $('format').value;
+        try {
+          if(format === 'quads') {
+            const quads = await jsonld.arrayToRDF(parsedData, parsedMapping);
+            output.innerHTML = paintJson(JSON.stringify(quads, null, 2));
+          } else {
+            const text = await jsonld.arrayToRDF(parsedData, parsedMapping, {format});
+            output.innerHTML = paintTurtle(text);
+          }
+        } catch(e) {
+          output.textContent = '';
+          showError(e);
+        }
+      }
+      let timer = null;
+      const schedule = () => { clearTimeout(timer); timer = setTimeout(run, 250); };
+      data.addEventListener('input', schedule);
+      mapping.addEventListener('input', schedule);
+      $('format').addEventListener('change', run);
+      $('run').addEventListener('click', run);
+      $('example').addEventListener('change', event => load(event.target.value));
+      [data, mapping].forEach(area => area.addEventListener('keydown', event => {
+        if(event.key === 'Tab') {
+          event.preventDefault();
+          const start = area.selectionStart, end = area.selectionEnd;
+          area.value = area.value.slice(0, start) + '  ' + area.value.slice(end);
+          area.selectionStart = area.selectionEnd = start + 2;
+          schedule();
+        }
+      }));
+      load(0);
+    })();
+  </script>
+</body>
+</html>

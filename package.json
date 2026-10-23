@@ -98,11 +98,13 @@
     "fetch-rdf-canon-test-suite": "if [ ! -e test-suites/rdf-canon ]; then git clone --depth 1 https://github.com/w3c/rdf-canon.git test-suites/rdf-canon; fi",
     "test": "npm run test-node",
     "test-node": "cross-env NODE_ENV=test mocha --delay -t 30000 -A -R ${REPORTER:-spec} tests/test-node.js",
+    "test-array": "mocha -R spec tests/array.js",
     "test-karma": "cross-env NODE_ENV=test karma start",
     "coverage": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text-summary npm test",
     "coverage-ci": "cross-env NODE_ENV=test nyc --reporter=lcovonly npm run test",
     "coverage-report": "nyc report",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "playground": "npm run build && node playground/serve.js"
   },
   "nyc": {
     "exclude": [
