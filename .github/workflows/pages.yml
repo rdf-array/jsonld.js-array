@@ -1,0 +1,80 @@
+name: pages
+
+# Build the browser bundle (dist/, gitignored) and deploy the JSON-LD-array
+# playground to GitHub Pages, for the rdf-array fork:
+#
+#   https://rdf-array.github.io/jsonld.js-array/             (redirects to the playground)
+#   https://rdf-array.github.io/jsonld.js-array/playground/
+#
+# The site is the playground/ directory beside dist/, laid out as in the
+# repository because the playground loads ../dist/jsonld.min.js, plus a root
+# index.html that redirects to it. Nothing accumulates between deploys.
+# Modelled on shex.js-array's pages.yml.
+#
+# One-time setup: Settings -> Pages -> Source: "GitHub Actions" (configure-pages
+# with `enablement: true` does it on the first run when the token may). The
+# github-pages environment must allow the branch named below.
+
+on:
+  push:
+    branches: [rdf-sequences]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; let an in-flight one finish rather than leave a
+# half-published site.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test-array
+      - run: npm run build
+      - name: stage the site
+        run: |
+          mkdir -p _site/playground _site/dist
+          cp playground/index.html playground/examples.js _site/playground/
+          cp dist/jsonld.min.js* _site/dist/
+          cat > _site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta http-equiv="refresh" content="0; url=playground/">
+            <title>JSON-LD-array playground</title>
+          </head>
+          <body>
+            <p>The JSON-LD-array playground is at <a href="playground/">playground/</a>.</p>
+          </body>
+          </html>
+          EOF
+      - uses: actions/configure-pages@v6
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

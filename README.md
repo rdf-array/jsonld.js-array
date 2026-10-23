@@ -10,8 +10,11 @@ instead of an `rdf:first`/`rdf:rest` ladder. `jsonld.arrayToRDF(data, mapping, {
 writing N-Quads-array, Turtle-array, or RDF/JS quads whose sequence terms are
 `{termType: "Sequence", elements}`; `jsonld.array.parseJSON` keeps the lexical form of numbers.
 `npm run playground` builds the browser bundle and serves a local playground at
-[playground/](playground/) with the examples of the specification, `json-ld-array.md` in the
-rdf-array project; `npm run test-array` runs the tests. Notes in [doc/rdf-array.md](doc/rdf-array.md).
+http://localhost:8080/playground/ with the examples of the specification,
+[json-ld-array](https://github.com/rdf-array/json-ld-array) (rendered at
+<https://rdf-array.github.io/json-ld-array/>); the same playground is published at
+<https://rdf-array.github.io/jsonld.js-array/>. `npm run test-array` runs the tests. Notes in
+[doc/rdf-array.md](doc/rdf-array.md).
 
 jsonld.js
 =========
