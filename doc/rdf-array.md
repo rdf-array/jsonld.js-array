@@ -2,8 +2,8 @@
 
 What this fork adds, where it lives, and what it does not do. The specification is
 [json-ld-array.md](https://github.com/rdf-array/rdf-array), rendered at
-<https://rdf-array.github.io/rdf-array/json-ld-array.html>; `json-ld-array-brief.md` there is the summary this
-implementation was built from. The playground is published at
+<https://rdf-array.github.io/rdf-array/json-ld-array.html>; its §3.6 (output), §3.7 (errors, with this
+implementation's codes) and §12 describe this implementation. The playground is published at
 <https://rdf-array.github.io/jsonld.js-array/> by `.github/workflows/pages.yml`.
 
 ## API
