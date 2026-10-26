@@ -35,6 +35,11 @@ implementation's codes) and §12 describe this implementation. The playground is
 - `lib/array/nquads.js`, `lib/array/turtle.js`: the writers.
 - `lib/jsonld.js`: the two additions to the API, `arrayToRDF` and `array`.
 - `tests/array.js`: the rows of the specification's tables as mocha tests (`npm run test-array`).
+- `tests/contrib.js`: the 55 shared JSON-LD-array tests of
+  [json-ld-api-contrib](https://github.com/rdf-array/json-ld-api-contrib) (`tests/array-manifest.jsonld`),
+  fetched into `test-suites/` (`npm run test-contrib`); inputs are read with `jsonld.array.parseJSON`, so
+  numbers keep their lexical form. The suite's toRdf and fromRdf manifests are not run: `jsonld.toRDF` and
+  `jsonld.fromRDF` still make and read ladders here.
 - `playground/`: `index.html` and `examples.js`, served by `serve.js` (`npm run playground`,
   which builds `dist/jsonld.min.js` first).
 
@@ -98,6 +103,7 @@ These sharpen the specification and should go back into it.
 ```bash
 npm install
 npm run test-array          # 42 mocha tests from the specification's tables
+npm run test-contrib        # the 55 json-ld-api-contrib JSON-LD-array tests
 npm run lint                # ESLint, jsonld.js's configuration
 npm run playground          # builds dist/ and serves http://localhost:8080/playground/
 ```
