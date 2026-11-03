@@ -78,3 +78,24 @@ describe('json-ld-api-contrib: toRdf and fromRdf', () => {
     });
   }
 });
+
+// rdf-undef: slots in expand, compact and flatten
+describe('json-ld-api-contrib: slots', () => {
+  const OPERATIONS = {
+    expand: (input, test) => jsonld.expand(input, test.option),
+    compact: (input, test) => jsonld.compact(input, readJson(test.context), test.option),
+    flatten: (input, test) => jsonld.flatten(input, null, test.option)
+  };
+  for(const [operation, run] of Object.entries(OPERATIONS)) {
+    const file = `${operation}-manifest.jsonld`;
+    if(!fs.existsSync(path.join(TESTS, file))) {
+      continue;
+    }
+    for(const test of readJson(file).sequence) {
+      it(`${operation} ${test.name}`, async () => {
+        assert.deepStrictEqual(
+          await run(readJson(test.input), test), readJson(test.expect));
+      });
+    }
+  }
+});

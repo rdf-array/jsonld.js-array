@@ -32,7 +32,7 @@
     "@digitalbazaar/http-client": "^4.2.0",
     "canonicalize": "^2.1.0",
     "lru-cache": "^6.0.0",
-    "rdf-canonize": "github:rdf-array/rdf-canonize-array#b0fd15a37f0d166eda4bddc306a3982b3eda066d"
+    "rdf-canonize": "github:rdf-array/rdf-canonize-array#835aa58c40f47304057fb95cc20cfd4120a38d4f"
   },
   "devDependencies": {
     "@babel/core": "^7.28.5",
@@ -96,10 +96,11 @@
     "fetch-json-ld-framing-test-suite": "if [ ! -e test-suites/json-wg-framing ]; then git clone --depth 1 https://github.com/w3c/json-ld-framing.git test-suites/json-ld-framing; fi",
     "fetch-json-ld-org-test-suite": "if [ ! -e test-suites/json-ld.org ]; then git clone --depth 1 https://github.com/json-ld/json-ld.org.git test-suites/json-ld.org; fi",
     "fetch-rdf-canon-test-suite": "if [ ! -e test-suites/rdf-canon ]; then git clone --depth 1 https://github.com/w3c/rdf-canon.git test-suites/rdf-canon; fi",
-    "fetch-json-ld-api-contrib": "if [ ! -e test-suites/json-ld-api-contrib ]; then git clone --depth 1 https://github.com/rdf-array/json-ld-api-contrib.git test-suites/json-ld-api-contrib; else git -C test-suites/json-ld-api-contrib pull --quiet; fi",
+    "fetch-json-ld-api-contrib": "if [ ! -e test-suites/json-ld-api-contrib ]; then git clone --depth 1 --branch rdf-undef https://github.com/rdf-array/json-ld-api-contrib.git test-suites/json-ld-api-contrib; else git -C test-suites/json-ld-api-contrib fetch --quiet origin rdf-undef && git -C test-suites/json-ld-api-contrib checkout --quiet FETCH_HEAD; fi",
     "test": "npm run test-node",
     "test-node": "cross-env NODE_ENV=test mocha --delay -t 30000 -A -R ${REPORTER:-spec} tests/test-node.js",
     "test-array": "mocha -R spec tests/array.js",
+    "test-undef": "mocha -R spec tests/undef.js",
     "test-contrib": "npm run fetch-json-ld-api-contrib && mocha -R spec tests/contrib.js",
     "test-karma": "cross-env NODE_ENV=test karma start",
     "coverage": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text-summary npm test",

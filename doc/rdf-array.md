@@ -116,6 +116,26 @@ These sharpen the specification and should go back into it.
   position (no RML-LV-style views).
 - The playground is a page of three panes; it keeps nothing and shares nothing.
 
+## rdf-undef
+
+Branch `rdf-undef`, [rdf-undef.md](https://github.com/rdf-array/rdf-array/blob/rdf-undef/docs/rdf-undef.md): a `null`
+that is a member of a list's array is an empty slot.
+
+- `jsonld.expand`, `compact` and `flatten` keep such a `null`, at any depth and in a `@container: @list` term; a slot does
+  not bear on which term compaction picks. Other nulls stay dropped: a `null` value, `"@list": null`, a `null` in an array
+  outside a list, and `{ "@value": null }`. `lib/expand.js`, `lib/compact.js`.
+- `jsonld.toRDF` makes such a `null` an element `{termType: 'Undef', value: 'undef'}` of the Sequence, written `undef` in
+  N-Quads-array. `jsonld.fromRDF` reads `undef` in a sequence, or an Undef element in a dataset, as a `null` in the `@list`;
+  N-Quads-array has no `undef` outside a sequence. `lib/toRdf.js`, `lib/fromRdf.js`, and rdf-canonize-array's `NQuads`.
+- `jsonld.canonize` writes a slot `undef`, through rdf-canonize-array's `rdf-undef` branch. `jsonld.frame` was not looked at.
+- `jsonld.arrayToRDF` makes a `null` in an array a slot, `{termType: 'Undef', value: 'undef'}`, written `undef` in
+  N-Quads-array and Turtle-array.
+
+Tests: `tests/undef.js` (`npm run test-undef`), 19. `tests/contrib.js`, with `JSONLD_API_CONTRIB=../json-ld-api-contrib`,
+takes json-ld-api-contrib's `rdf-undef` branch, 102 tests: the suite's toRdf and fromRdf manifests with their slots, and its
+expand, compact, flatten and JSON-LD-array slot tests. `npm run test-array` stays 50. `npm test` runs json-ld-api-array's
+`rdf-undef` branch: 1503 pass, 100 are skipped, and the same 2 fail as on `rdf-sequences`.
+
 ## Running
 
 ```bash
@@ -123,6 +143,7 @@ npm install
 npm test                    # the W3C suites: json-ld-api-array, framing, RDF canonicalization
 npm run test-array          # 50 mocha tests from the specification's tables, and of toRDF and fromRDF
 npm run test-contrib        # the json-ld-api-contrib JSON-LD-array, toRdf and fromRdf tests
+npm run test-undef          # mocha tests of slots
 npm run lint                # ESLint, jsonld.js's configuration
 npm run playground          # builds dist/ and serves http://localhost:8080/playground/
 ```

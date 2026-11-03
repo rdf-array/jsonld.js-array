@@ -310,7 +310,7 @@ describe('JSON-LD-array', () => {
         q('_:b0', iri(EX + 'members'), seq('_:b1', '_:b2')),
         q('_:b0', iri(EX + 'code'), seq(iri(P + 'A1'), iri(P + 'B2'))),
         q('_:b3', iri(EX + 'x'), lit('1', XSD + 'integer')),
-        q('_:b0', iri(EX + 'mixed'), seq(lit('a'), lit('1', XSD + 'integer'), '_:b3'))
+        q('_:b0', iri(EX + 'mixed'), seq(lit('a'), lit('1', XSD + 'integer'), 'undef', '_:b3'))
       ]);
     });
 
