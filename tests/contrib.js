@@ -8,8 +8,6 @@
  */
 const jsonld = require('..');
 const assert = require('assert');
-const {isomorphic} = require('./isomorphic');
-const NQuads = require('../lib/NQuads');
 const fs = require('fs');
 const path = require('path');
 
@@ -65,7 +63,9 @@ describe('json-ld-api-contrib: toRdf and fromRdf', () => {
       const input = readJson(test.input);
       const actual = await jsonld.toRDF(input, {base: base(test), format: 'application/n-quads'});
       const expected = fs.readFileSync(path.join(TESTS, test.expect), 'utf8');
-      assert.ok(isomorphic(NQuads.parse(actual), NQuads.parse(expected)), `${actual}--\n${expected}`);
+      const canonical = text =>
+        jsonld.canonize(text, {inputFormat: 'application/n-quads'});
+      assert.strictEqual(await canonical(actual), await canonical(expected));
     });
   }
 

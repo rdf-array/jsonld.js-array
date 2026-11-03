@@ -609,16 +609,18 @@ _:l <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02
     }
   });
 
-  it('canonize refuses a sequence and still takes a ladder', async () => {
-    const doc = {'@id': S, [P]: {'@list': ['a']}};
-    const refused = error => {
-      assert.strictEqual(error.details.code, 'sequence in canonicalization');
-      return true;
-    };
-    await assert.rejects(jsonld.canonize(doc), refused);
-    await assert.rejects(
-      jsonld.canonize(`<${S}> <${P}> ("a") .\n`, {inputFormat: 'application/n-quads'}),
-      refused);
+  it('canonize relabels blank nodes inside sequences', async () => {
+    const doc = {[P]: {'@list': [{'@id': '_:x'}, {'@list': [{'@id': '_:x'}]}]}};
+    assert.strictEqual(
+      await jsonld.canonize(doc),
+      `_:c14n0 <${P}> (_:c14n1 (_:c14n1)) .\n`);
+    assert.strictEqual(
+      await jsonld.canonize(
+        `_:a <${P}> (_:b (_:b)) .\n`, {inputFormat: 'application/n-quads'}),
+      `_:c14n0 <${P}> (_:c14n1 (_:c14n1)) .\n`);
+  });
+
+  it('canonize still takes a ladder as ordinary triples', async () => {
     const canonical = await jsonld.canonize(LADDER, {inputFormat: 'application/n-quads'});
     assert.ok(canonical.includes('_:c14n0'));
   });
