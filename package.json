@@ -92,7 +92,7 @@
     "build-webpack": "webpack",
     "fetch-test-suites": "npm run fetch-json-ld-wg-test-suite && npm run fetch-json-ld-org-test-suite && npm run fetch-rdf-canon-test-suite && npm run fetch-json-ld-api-contrib",
     "fetch-json-ld-wg-test-suite": "npm run fetch-json-ld-api-test-suite && npm run fetch-json-ld-framing-test-suite",
-    "fetch-json-ld-api-test-suite": "if [ ! -e test-suites/json-wg-api ]; then git clone --depth 1 https://github.com/w3c/json-ld-api.git test-suites/json-ld-api; fi",
+    "fetch-json-ld-api-test-suite": "if [ ! -e test-suites/json-wg-api ]; then git clone --depth 1 https://github.com/rdf-array/json-ld-api-array.git test-suites/json-ld-api; fi",
     "fetch-json-ld-framing-test-suite": "if [ ! -e test-suites/json-wg-framing ]; then git clone --depth 1 https://github.com/w3c/json-ld-framing.git test-suites/json-ld-framing; fi",
     "fetch-json-ld-org-test-suite": "if [ ! -e test-suites/json-ld.org ]; then git clone --depth 1 https://github.com/json-ld/json-ld.org.git test-suites/json-ld.org; fi",
     "fetch-rdf-canon-test-suite": "if [ ! -e test-suites/rdf-canon ]; then git clone --depth 1 https://github.com/w3c/rdf-canon.git test-suites/rdf-canon; fi",

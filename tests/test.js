@@ -59,6 +59,8 @@ const jsonld = require('..');
 const {klona} = require('klona');
 const {prependBase} = require('../lib/url');
 const rdfCanonize = require('rdf-canonize');
+const {isomorphic} = require('./isomorphic');
+const NQuads = require('../lib/NQuads');
 
 const stats = {
   getJson: 0,
@@ -1163,6 +1165,13 @@ async function compareCanonizedExpectedNQuads({test, result}) {
       // some tests need this: expand 0027 and 0062
       maxWorkFactor: 2
     };
+    // rdf-array: RDFC-1.0 has no sequence term
+    if(expect.includes('(') || result.includes('(')) {
+      assert.ok(
+        isomorphic(NQuads.parse(result), NQuads.parse(expect)),
+        `not isomorphic:\n${result}--\n${expect}`);
+      return;
+    }
     const expectDataset = rdfCanonize.NQuads.parse(expect);
     const expectCmp = await rdfCanonize.canonize(expectDataset, opts);
     const resultDataset = rdfCanonize.NQuads.parse(result);

@@ -3,7 +3,8 @@
 # jsonld.js-array: jsonld.js for rdf-array
 
 **rdf-array** fork of [jsonld.js](https://github.com/digitalbazaar/jsonld.js): the JSON-LD processor,
-unchanged, plus an implementation of **JSON-LD-array**, a mapping language that turns conventional JSON
+reading and writing a `@list` as one sequence term in `toRDF` and `fromRDF`, plus an implementation of
+**JSON-LD-array**, a mapping language that turns conventional JSON
 (no `@` keywords in the data) into rdf-array, RDF whose data model has sequences as terms. A JSON array
 becomes one sequence term `( e1 e2 … )`, nested arrays nested sequences and `[]` the empty sequence,
 instead of an `rdf:first`/`rdf:rest` ladder. `jsonld.arrayToRDF(data, mapping, {format})` converts,

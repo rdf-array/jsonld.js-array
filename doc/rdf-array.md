@@ -25,6 +25,27 @@ implementation's codes) and §12 describe this implementation. The playground is
   `unknown named map`, `literal subject`, `invalid literal`, …) and `details.path`, the keys and
   indices from the root to the value.
 
+## JSON-LD's own algorithms
+
+A `@list` is one sequence term, a nested `@list` a nested sequence. No JSON-LD algorithm here mentions `rdf:first`,
+`rdf:rest` or `rdf:nil`, which are ordinary IRIs.
+
+- `jsonld.toRDF` gives `{termType: 'Sequence', elements, value}` for a `@list`, and with
+  `format: 'application/n-quads'` writes it `( … )`. An element that is a relative IRI is left out, as a relative IRI
+  object is.
+- `jsonld.fromRDF` reads `( … )` in N-Quads-array, or a Sequence in a dataset, as `{"@list": [ … ]}`. A ladder is ordinary
+  triples and stays ordinary nodes. A sequence as a subject is an error (`details.code`: `sequence subject`), since a
+  JSON-LD node has nowhere to put it.
+- `jsonld.canonize` refuses a sequence (`details.code`: `sequence in canonicalization`), from JSON-LD or from N-Quads:
+  RDFC-1.0 has no sequence term and would hash its spelling with the blank nodes inside it left unrelabelled. So a
+  document with a `@list` cannot be canonicalized until there is an algorithm for sequences.
+- `jsonld.frame`, `expand`, `compact` and `flatten` work on JSON-LD and did not change.
+
+`npm test` runs the rest of the upstream harness against [json-ld-api-array](https://github.com/rdf-array/json-ld-api-array),
+with the framing and RDF canonicalization suites unchanged: 1503 pass, 100 are skipped, as upstream skips them, and 2 fail
+for reasons not about lists. fromRdf `0027` has a comment line that rdf-canonize's N-Quads reader rejects, and fromRdf
+`0028` has `useNativeTypes` keep an `@type` of `xsd:string`.
+
 ## Files
 
 - `lib/array/terms.js`: the terms, sequences included, and their N-Triples spelling.
@@ -33,13 +54,16 @@ implementation's codes) and §12 describe this implementation. The playground is
 - `lib/array/parse.js`: lexical-preserving JSON parsing and the JSON kind of a value.
 - `lib/array/convert.js`: the processor, rules 1–5 and the bases.
 - `lib/array/nquads.js`, `lib/array/turtle.js`: the writers.
-- `lib/jsonld.js`: the two additions to the API, `arrayToRDF` and `array`.
+- `lib/jsonld.js`: the two additions to the API, `arrayToRDF` and `array`, and `canonize`'s refusal of a sequence.
+- `lib/toRdf.js`, `lib/fromRdf.js`: a `@list` is one sequence term and a sequence term is a `@list`.
+- `lib/NQuads.js`: N-Quads-array over rdf-canonize's reader and writer.
 - `tests/array.js`: the rows of the specification's tables as mocha tests (`npm run test-array`).
 - `tests/contrib.js`: the 55 shared JSON-LD-array tests of
   [json-ld-api-contrib](https://github.com/rdf-array/json-ld-api-contrib) (`tests/array-manifest.jsonld`),
   fetched into `test-suites/` (`npm run test-contrib`); inputs are read with `jsonld.array.parseJSON`, so
-  numbers keep their lexical form. The suite's toRdf and fromRdf manifests are not run: `jsonld.toRDF` and
-  `jsonld.fromRDF` still make and read ladders here.
+  numbers keep their lexical form. The suite's toRdf and fromRdf manifests run as well, 74 tests in all.
+- `tests/isomorphic.js`: dataset comparison with blank nodes inside sequences, for the expectations RDFC-1.0
+  cannot hash; `tests/test.js` uses it when an expectation or result holds a sequence.
 - `playground/`: `index.html` and `examples.js`, served by `serve.js` (`npm run playground`,
   which builds `dist/jsonld.min.js` first).
 
@@ -88,22 +112,20 @@ These sharpen the specification and should go back into it.
 
 ## Not done
 
-- No reverse direction (rdf-array to JSON), and no interaction with JSON-LD's own `expand`,
-  `compact`, `toRDF` or `fromRDF`: they are untouched, and `jsonld.toRDF` still makes `rdf:first`
-  ladders for `@list`.
+- No reverse direction (rdf-array to JSON), and no interaction between a JSON-LD-array mapping and
+  JSON-LD's own `expand`, `compact`, `toRDF` or `fromRDF`.
 - Named maps outside the root, by the specification's own decision.
 - Templates do not reach into a different object than the one they describe, its parent and its
   position (no RML-LV-style views).
 - The playground is a page of three panes; it keeps nothing and shares nothing.
-- The W3C JSON-LD test suites (`npm test`) were not run in this fork; they need the suites checked
-  out beside it and do not exercise JSON-LD-array.
 
 ## Running
 
 ```bash
 npm install
-npm run test-array          # 42 mocha tests from the specification's tables
-npm run test-contrib        # the 55 json-ld-api-contrib JSON-LD-array tests
+npm test                    # the W3C suites: json-ld-api-array, framing, RDF canonicalization
+npm run test-array          # 49 mocha tests from the specification's tables, and of toRDF and fromRDF
+npm run test-contrib        # the json-ld-api-contrib JSON-LD-array, toRdf and fromRdf tests
 npm run lint                # ESLint, jsonld.js's configuration
 npm run playground          # builds dist/ and serves http://localhost:8080/playground/
 ```

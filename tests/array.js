@@ -553,3 +553,73 @@ describe('JSON-LD-array', () => {
     });
   });
 });
+
+describe('jsonld.toRDF and jsonld.fromRDF: a @list is one sequence term', () => {
+  const S = 'http://example.org/s';
+  const P = 'http://example.org/p';
+  const LADDER = `_:l <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "a" .
+_:l <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+<${S}> <${P}> _:l .
+`;
+
+  it('toRDF makes one quad whose object is a Sequence', async () => {
+    const doc = {'@id': S, [P]: {'@list': ['a', {'@list': []}, {'@id': 'http://example.org/o'}]}};
+    const dataset = await jsonld.toRDF(doc);
+    assert.strictEqual(dataset.length, 1);
+    assert.strictEqual(dataset[0].object.termType, 'Sequence');
+    assert.deepStrictEqual(
+      dataset[0].object.elements.map(element => element.termType),
+      ['Literal', 'Sequence', 'NamedNode']);
+    assert.strictEqual(
+      await jsonld.toRDF(doc, {format: 'application/n-quads'}),
+      `<${S}> <${P}> ("a" () <http://example.org/o>) .\n`);
+  });
+
+  it('toRDF leaves a relative IRI out of a sequence', async () => {
+    const doc = {'@id': S, [P]: {'@list': [{'@id': 'relative'}, 'a']}};
+    assert.strictEqual(
+      await jsonld.toRDF(doc, {format: 'application/n-quads'}),
+      `<${S}> <${P}> ("a") .\n`);
+  });
+
+  it('fromRDF makes a @list of a Sequence, from text and from quads', async () => {
+    const doc = {'@id': S, [P]: [{'@list': [{'@value': 'a(b'}, {'@list': []}]}]};
+    const nquads = `<${S}> <${P}> ("a(b" ()) .\n`;
+    assert.deepStrictEqual(await jsonld.fromRDF(nquads), [doc]);
+    assert.deepStrictEqual(await jsonld.fromRDF(await jsonld.toRDF(doc)), [doc]);
+  });
+
+  it('a ladder is ordinary triples, read and written as they are', async () => {
+    const expanded = await jsonld.fromRDF(LADDER);
+    assert.ok(!JSON.stringify(expanded).includes('@list'));
+    const nquads = await jsonld.toRDF(expanded, {format: 'application/n-quads'});
+    assert.strictEqual(nquads.split('\n').filter(Boolean).length, 3);
+  });
+
+  it('fromRDF refuses a sequence as a subject', async () => {
+    await assert.rejects(jsonld.fromRDF(`("a") <${P}> "b" .\n`), error => {
+      assert.strictEqual(error.details.code, 'sequence subject');
+      return true;
+    });
+  });
+
+  it('N-Quads-array is checked', async () => {
+    for(const bad of [`<${S}> <${P}> ("a" .`, `<${S}> ("a") "b" .`, `<${S}> <${P}> ("a") ("b") .`, `<${S}> <${P}> ("a")`]) {
+      await assert.rejects(jsonld.fromRDF(`${bad}\n`), /N-Quads parse error on line 1/, bad);
+    }
+  });
+
+  it('canonize refuses a sequence and still takes a ladder', async () => {
+    const doc = {'@id': S, [P]: {'@list': ['a']}};
+    const refused = error => {
+      assert.strictEqual(error.details.code, 'sequence in canonicalization');
+      return true;
+    };
+    await assert.rejects(jsonld.canonize(doc), refused);
+    await assert.rejects(
+      jsonld.canonize(`<${S}> <${P}> ("a") .\n`, {inputFormat: 'application/n-quads'}),
+      refused);
+    const canonical = await jsonld.canonize(LADDER, {inputFormat: 'application/n-quads'});
+    assert.ok(canonical.includes('_:c14n0'));
+  });
+});

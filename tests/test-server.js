@@ -16,7 +16,8 @@ const pathMappings = [
   // JSON-LD Test Suites
   // W3C JSON-LD API
   ['/tests/test-suites/json-ld-api', '../test-suites/json-ld-api/tests'],
-  ['/tests/siblings/json-ld-api', '../../json-ld-api/tests'],
+  // rdf-array: the fork whose expectations have sequences for @list
+  ['/tests/siblings/json-ld-api', '../../json-ld-api-array/tests'],
   // W3C JSON-LD Framing
   ['/tests/test-suites/json-ld-framing',
     '../test-suites/json-ld-framing/tests'],

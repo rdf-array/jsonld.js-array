@@ -4,11 +4,12 @@
  * `npm run fetch-json-ld-api-contrib` checks the suite out into test-suites/; run with
  * `npm run test-contrib`, or point JSONLD_API_CONTRIB at another checkout.
  *
- * The toRdf and fromRdf manifests of the same suite are not run here: this fork leaves
- * jsonld.toRDF and jsonld.fromRDF as they were, with @list as rdf:first/rdf:rest ladders.
+ * The suite's toRdf and fromRdf manifests run too: a @list is one sequence term.
  */
 const jsonld = require('..');
 const assert = require('assert');
+const {isomorphic} = require('./isomorphic');
+const NQuads = require('../lib/NQuads');
 const fs = require('fs');
 const path = require('path');
 
@@ -47,6 +48,33 @@ describe('json-ld-api-contrib: JSON-LD-array', () => {
         const expected = fs.readFileSync(path.join(TESTS, test.expect), 'utf8');
         assert.deepStrictEqual(lines(actual), lines(expected));
       }
+    });
+  }
+});
+
+describe('json-ld-api-contrib: toRdf and fromRdf', () => {
+  const positive = name => readJson(`${name}-manifest.jsonld`).sequence
+    .filter(test => test['@type'].includes('jld:PositiveEvaluationTest'));
+  const base = test => {
+    const {baseIri} = readJson('toRdf-manifest.jsonld');
+    return baseIri + test.input;
+  };
+
+  for(const test of positive('toRdf')) {
+    it(`toRdf ${test['@id']} ${test.name}`, async () => {
+      const input = readJson(test.input);
+      const actual = await jsonld.toRDF(input, {base: base(test), format: 'application/n-quads'});
+      const expected = fs.readFileSync(path.join(TESTS, test.expect), 'utf8');
+      assert.ok(isomorphic(NQuads.parse(actual), NQuads.parse(expected)), `${actual}--\n${expected}`);
+    });
+  }
+
+  for(const test of positive('fromRdf')) {
+    it(`fromRdf ${test['@id']} ${test.name}`, async () => {
+      const input = fs.readFileSync(path.join(TESTS, test.input), 'utf8');
+      const actual = await jsonld.fromRDF(input, {format: 'application/n-quads'});
+      const byId = (a, b) => a['@id'].localeCompare(b['@id']);
+      assert.deepStrictEqual(actual.sort(byId), readJson(test.expect).sort(byId));
     });
   }
 });
