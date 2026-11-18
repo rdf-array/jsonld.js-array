@@ -95,7 +95,8 @@ describe('json-ld-api-contrib: toRdf and fromRdf', () => {
 describe('json-ld-api-contrib: slots', () => {
   const OPERATIONS = {
     expand: (input, test) => jsonld.expand(input, test.option),
-    compact: (input, test) => jsonld.compact(input, readJson(test.context), test.option),
+    compact: (input, test) =>
+      jsonld.compact(input, readJson(test.context), test.option),
     flatten: (input, test) => jsonld.flatten(input, null, test.option)
   };
   for(const [operation, run] of Object.entries(OPERATIONS)) {
