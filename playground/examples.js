@@ -159,6 +159,20 @@ window.JSONLD_ARRAY_EXAMPLES = [
   }
 }`
   },
+  // rdf-undef: the webapp's faded colour, where null in a list is a slot
+  {
+    title: 'The ShEx webapp\'s faded colour: null is a slot',
+    data: `[ { "id": "red",   "rgb": [255, 0, 0] },
+  { "id": "faded", "rgb": [255, null, 0] } ]`,
+    mapping: `{
+  "prefixes": { "ex": "http://a.example/" },
+  "base": "http://a.example/",
+  "propertyMap": {
+    "id":  { "role": "identifier" },
+    "rgb": "ex:rgb"
+  }
+}`
+  },
   {
     title: 'Dictionaries are repeated properties (§5.4)',
     data: `{ "people": { "alice": { "name": "Alice" }, "bob": { "name": "Bob" } },
