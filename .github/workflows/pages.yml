@@ -1,23 +1,26 @@
 name: pages
 
 # Build the browser bundle (dist/, gitignored) and deploy the JSON-LD-array
-# playground to GitHub Pages, for the rdf-array fork:
+# playground to GitHub Pages, for the rdf-array fork, from two branches:
 #
-#   https://rdf-array.github.io/jsonld.js-array/             (redirects to the playground)
-#   https://rdf-array.github.io/jsonld.js-array/playground/
+#   https://rdf-array.github.io/jsonld.js-array/                     (redirects to the playground)
+#   https://rdf-array.github.io/jsonld.js-array/playground/          rdf-sequences
+#   https://rdf-array.github.io/jsonld.js-array/rdf-undef/playground/ rdf-undef (empty slots)
 #
-# The site is the playground/ directory beside dist/, laid out as in the
-# repository because the playground loads ../dist/jsonld.min.js, plus a root
-# index.html that redirects to it. Nothing accumulates between deploys.
-# Modelled on shex.js-array's pages.yml.
+# Each branch's site is the playground/ directory beside dist/, laid out as
+# in the repository because the playground loads ../dist/jsonld.min.js. The
+# rdf-sequences site is the root, the rdf-undef site is under rdf-undef/, and a
+# root index.html redirects to the rdf-sequences playground. A push to either
+# branch rebuilds both and redeploys the whole site; nothing accumulates
+# between deploys. Modelled on shex.js-array's pages.yml.
 #
 # One-time setup: Settings -> Pages -> Source: "GitHub Actions" (configure-pages
 # with `enablement: true` does it on the first run when the token may). The
-# github-pages environment must allow the branch named below.
+# github-pages environment must allow both branches named below.
 
 on:
   push:
-    branches: [rdf-sequences]
+    branches: [rdf-sequences, rdf-undef]
   workflow_dispatch:
 
 permissions:
@@ -33,9 +36,15 @@ concurrency:
 
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [rdf-sequences, rdf-undef]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ matrix.branch }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -44,11 +53,30 @@ jobs:
       - run: npm run lint
       - run: npm run test-array
       - run: npm run build
-      - name: stage the site
+      - name: stage the branch's site
         run: |
           mkdir -p _site/playground _site/dist
           cp playground/index.html playground/examples.js _site/playground/
           cp dist/jsonld.min.js* _site/dist/
+      - uses: actions/upload-artifact@v7
+        with:
+          name: site-${{ matrix.branch }}
+          path: _site
+
+  assemble:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: site-rdf-sequences
+          path: _site
+      - uses: actions/download-artifact@v8
+        with:
+          name: site-rdf-undef
+          path: _site/rdf-undef
+      - name: the root page
+        run: |
           cat > _site/index.html <<'EOF'
           <!DOCTYPE html>
           <html lang="en">
@@ -58,7 +86,9 @@ jobs:
             <title>JSON-LD-array playground</title>
           </head>
           <body>
-            <p>The JSON-LD-array playground is at <a href="playground/">playground/</a>.</p>
+            <p>The JSON-LD-array playground is at <a href="playground/">playground/</a>
+              (the rdf-sequences branch); the rdf-undef branch's, with empty slots, at
+              <a href="rdf-undef/playground/">rdf-undef/playground/</a>.</p>
           </body>
           </html>
           EOF
@@ -70,7 +100,7 @@ jobs:
           path: _site
 
   deploy:
-    needs: build
+    needs: assemble
     runs-on: ubuntu-latest
     environment:
       name: github-pages
