@@ -113,6 +113,52 @@ window.JSONLD_ARRAY_EXAMPLES = [
   }
 }`
   },
+  // The next three are the shex.js-array webapp's rdf-array examples
+  // (packages/shex-webapp/examples/manifest.yaml), written as JSON: each
+  // gives the same graph as that example's Turtle, so the shapes and SPARQL
+  // queries there apply to what comes out here.
+  {
+    title: 'The ShEx webapp\'s colour: three bytes',
+    data: `{ "id": "red", "rgb": [255, 0, 0] }`,
+    mapping: `{
+  "prefixes": { "ex": "http://a.example/" },
+  "base": "http://a.example/",
+  "propertyMap": {
+    "id":  { "role": "identifier" },
+    "rgb": "ex:rgb"
+  }
+}`
+  },
+  {
+    title: 'The ShEx webapp\'s polygon: nested sequences',
+    data: `{ "id": "triangle", "points": [[0.0, 0.0], [4.0, 0.0], [0.0, 3.0]] }`,
+    mapping: `{
+  "prefixes": { "ex": "http://a.example/" },
+  "base": "http://a.example/",
+  "propertyMap": {
+    "id":     { "role": "identifier" },
+    "points": "ex:points"
+  }
+}`
+  },
+  {
+    title: 'The ShEx webapp\'s playlist: a sequence of nodes',
+    data: `{ "id": "mix", "title": "Monday",
+  "tracks": [ { "id": "t1", "title": "Intro", "seconds": 95 },
+              { "id": "t2", "title": "Outro", "seconds": 210 } ] }`,
+    mapping: `{
+  "prefixes": { "ex": "http://a.example/" },
+  "base": "http://a.example/",
+  "propertyMap": {
+    "id":     { "role": "identifier" },
+    "title":  "ex:title",
+    "tracks": { "iri": "ex:tracks",
+                "propertyMap": { "id":      { "role": "identifier" },
+                                 "title":   "ex:title",
+                                 "seconds": "ex:seconds" } }
+  }
+}`
+  },
   {
     title: 'Dictionaries are repeated properties (§5.4)',
     data: `{ "people": { "alice": { "name": "Alice" }, "bob": { "name": "Bob" } },
